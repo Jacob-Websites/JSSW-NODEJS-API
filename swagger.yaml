@@ -1,0 +1,77 @@
+openapi: 3.0.0
+info:
+  title: My Local API
+  version: 1.0.0
+  description: API documentation for my local API running on localhost:8080.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /hello:
+    get:
+      summary: Greet the user
+      description: Returns a greeting message for the user.
+      responses:
+        '200':
+          description: Successful response with a greeting message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Hello, World!"
+
+  /user/{userId}:
+    get:
+      summary: Get user details
+      description: Retrieve details of a user by their unique ID.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: The unique identifier of the user
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successfully retrieved user details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    format: int64
+                  username:
+                    type: string
+                  email:
+                    type: string
+        '404':
+          description: User not found
+        '400':
+          description: Invalid ID supplied
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+
+  responses:
+    NotFound:
+      description: Resource not found
+    BadRequest:
+      description: Bad request

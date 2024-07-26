@@ -3,6 +3,8 @@ const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const app = express();
 const swaggerUi = require('swagger-ui-express');
+const path = require('path');
+const res = require('express/lib/response');
 const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'bzgbc53adkctrr2boqnh-mysql.services.clever-cloud.com',
@@ -27,6 +29,36 @@ app.get('/',(req,res)=>{
     })
 
 })
+app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
+app.use(express.json());
+app.get('/swagger', (req, res) => {
+    res.sendFile(path.join(__dirname, 'swagger.yaml'));
+});
+app.post('/api/addorganization', (req, res) => {
+  const data = req.body;
+
+  // Execute the INSERT statement
+ pool.query(
+  'INSERT INTO Organization (id,name,address,phone_number,email,image,isdeleted) VALUES (uuid(),?, ?, ?, ?, ?, 0)',
+  [
+    data.name,
+    data.address,
+    data.phonenumber,
+    data.email,
+    data.image
+  ],
+  (error, results, fields) => {
+    if (error) {
+      console.error('Error inserting new record: ' + error.stack);
+      res.status(500).json({ message: 'Error inserting new record' });
+      return;
+    }
+    console.log('New record inserted with ID:', results.insertId);
+    res.status(200).json({ message: 'Registered Successfully' });
+  }
+);
+
+});
 const port = 8080;
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
