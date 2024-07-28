@@ -64,7 +64,7 @@ app.get('/api/Organization', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
 
-  const offset = (page - 1) * pageSize;
+  const offset = (currentPage - 1) * pageSize;
 
   const query = `SELECT * FROM Organization LIMIT ? OFFSET ?`;
 
