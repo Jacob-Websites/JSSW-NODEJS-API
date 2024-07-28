@@ -1,3 +1,4 @@
+
 name: Build and Push Docker image
 
 on:
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: Prod
-      
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -31,6 +32,3 @@ jobs:
         file: ./docker/Dockerfile
         push: true
         tags: prabhutejad/jsswnodejsapi:latest
-
-
-
