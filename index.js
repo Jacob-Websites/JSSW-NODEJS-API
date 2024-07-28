@@ -57,6 +57,23 @@ app.post('/api/addorganization', (req, res) => {
 );
 
 });
+
+app.get('/api/Organizations',(req,res)=>{
+  pool.query(`select * from Organization`,(err,result)=>{
+    if(err){
+      console.error("Error Fetching Organization")
+      res.json({
+        status:403,
+        error:"Error Fetching Records"
+      })
+    }else{
+      res.json({
+        status:200,
+        data:result
+      })
+    }
+  })
+})
 const port = 3000;
 app.listen(port, () => {
     console.log(`Server started on port ${port}.`);
