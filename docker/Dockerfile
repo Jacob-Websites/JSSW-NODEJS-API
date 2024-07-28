@@ -1,21 +1,29 @@
-# Dockerfile
-# Use the official Node.js image as base
-FROM node:14
+# Use the official Node.js image.
+# https://hub.docker.com/_/node
+FROM node:20
 
-# Set the working directory inside the container
-WORKDIR /
+# Create and change to the app directory.
+WORKDIR index.js
 
-# Copy package.json and package-lock.json to the working directory
+# Copy application dependency manifests to the container image.
 COPY package*.json ./
-
-# Install npm dependencies
 RUN npm install --production
 
-# Copy the rest of your application code to the working directory
+
+# Debug step: List files after copying package*.json
+RUN ls -alh index.js
+
+# Install production dependencies.
+RUN npm install --production
+
+# Copy local code to the container image.
 COPY . .
 
-# Expose the port that your app runs on
-EXPOSE 8080
+# Debug step: List files after copying all code
+RUN ls index.js
 
-# Command to run your application
-CMD ["node", "index.js"]
+# Run the web service on container startup.
+CMD [ "node", "index.js" ]
+
+# Document that the service listens on port 8080.
+EXPOSE 8080
