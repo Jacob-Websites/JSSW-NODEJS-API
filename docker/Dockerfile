@@ -3,7 +3,7 @@
 FROM node:14
 
 # Create and change to the app directory.
-WORKDIR /index.js
+WORKDIR ./
 
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure both package.json AND package-lock.json are copied.
