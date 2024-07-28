@@ -36,8 +36,6 @@ app.get('/swagger', (req, res) => {
 });
 app.post('/api/addorganization', (req, res) => {
   const data = req.body;
-
-  // Execute the INSERT statement
  pool.query(
   'INSERT INTO Organization (id,name,address,phone_number,email,image,isdeleted) VALUES (uuid(),?, ?, ?, ?, ?, 0)',
   [
