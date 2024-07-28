@@ -3,7 +3,7 @@
 FROM node:14
 
 # Create and change to the app directory.
-WORKDIR /
+WORKDIR /usr/src/app
 
 # Copy application dependency manifests to the container image.
 # A wildcard is used to ensure both package.json AND package-lock.json are copied.
@@ -19,5 +19,5 @@ COPY . .
 # Run the web service on container startup.
 CMD [ "node", "index.js" ]
 
-# Document that the service listens on port 3000.
+# Document that the service listens on port 8080.
 EXPOSE 8080
