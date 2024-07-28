@@ -3,10 +3,12 @@
 FROM node:20
 
 # Create and change to the app directory.
-WORKDIR /usr/src/app
+WORKDIR index.js
 
 # Copy application dependency manifests to the container image.
 COPY package*.json ./
+RUN npm install --production
+
 
 # Debug step: List files after copying package*.json
 RUN ls -alh /usr/src/app
