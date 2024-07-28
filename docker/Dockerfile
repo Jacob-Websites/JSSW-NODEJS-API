@@ -1,15 +1,17 @@
-# Use a specific version of Node.js as a base to avoid compatibility issues
+# Use a specific version of Node.js as a base
 FROM node:14
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /index
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy package.json and package-lock.json to the working directory
+COPY package.json package-lock.json* ./
 
-# Clear npm cache and install dependencies with verbose logging to help diagnose issues
-RUN npm cache clean --force \
-    && npm install --verbose
+# List files in the directory to debug the issue
+RUN ls -al
+
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application files
 COPY . .
