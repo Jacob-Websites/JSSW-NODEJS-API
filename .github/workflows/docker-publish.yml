@@ -8,7 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    environment:
+      name: Prod
+      
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
