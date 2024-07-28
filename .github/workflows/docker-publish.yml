@@ -32,6 +32,10 @@ jobs:
         push: true
         tags: prabhutejad/jsswnodejsapi:latest
 
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    needs: build  # This ensures the deploy job runs only after the build job succeeds
+    
+    steps:
     - name: Trigger Render Deploy
-      if: success()
-      run: curl -X POST "${{secrets.TriggerRender}}"
+      run: curl -X POST "${{ secrets.TriggerRender }}"
