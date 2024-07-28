@@ -61,7 +61,7 @@ app.post('/api/addorganization', (req, res) => {
 
 
 app.get('/api/Organization', (req, res) => {
-  const page = parseInt(req.query.page) || 1;
+  const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
 
   const offset = (page - 1) * pageSize;
@@ -94,7 +94,7 @@ app.get('/api/Organization', (req, res) => {
               result,
               totalRecords,
               totalPages,
-              currentPage: page,
+              currentPage: currentPage,
               pageSize
             },
            
