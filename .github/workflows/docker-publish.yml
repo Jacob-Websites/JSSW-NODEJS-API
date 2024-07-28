@@ -1,11 +1,9 @@
-
 name: Build and Push Docker image
 
 on:
   push:
     branches:
       - main
-      - pipelines
 
 jobs:
   build:
@@ -33,3 +31,7 @@ jobs:
         file: Dockerfile
         push: true
         tags: prabhutejad/jsswnodejsapi:latest
+
+    - name: Trigger Render Deploy
+      if: success()
+      run: curl -X POST "${{secrets.TriggerRender}}"
