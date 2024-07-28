@@ -3,24 +3,22 @@
 FROM node:20
 
 # Create and change to the app directory.
-WORKDIR index.js
+WORKDIR /index
 
 # Copy application dependency manifests to the container image.
-COPY package*.json ./
+COPY package.json /index
 RUN npm install --production
 
 
 # Debug step: List files after copying package*.json
-RUN ls -alh index.js
+RUN ls -alh index
 
 # Install production dependencies.
 RUN npm install --production
 
 # Copy local code to the container image.
-COPY . .
+COPY . /index
 
-# Debug step: List files after copying all code
-RUN ls index.js
 
 # Run the web service on container startup.
 CMD [ "node", "index.js" ]
