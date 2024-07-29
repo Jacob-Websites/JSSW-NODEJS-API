@@ -4,7 +4,6 @@ const bodyParser = require('body-parser');
 const app = express();
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
-const res = require('express/lib/response');
 const pool = mysql.createPool({
     connectionLimit: 10,
     host: 'bzgbc53adkctrr2boqnh-mysql.services.clever-cloud.com',
@@ -104,6 +103,196 @@ app.get('/api/Organization', (req, res) => {
     }
   });
 });
+
+
+app.post('/api/addAbout',(req,res)=>{
+  const data = req.body;
+  pool.query(`insert into About (id,title,description,OrgId,IsDeleted) values (uuid(), ?, ? , ?,0)`,[
+    data.title,
+    data.description,
+    data.orgId,
+  ],(err,results,fields)=>{
+    if(err){
+      console.error('Error inserting new record: ' + error.stack);
+      res.status(500).json({ message: 'Error inserting new record' });
+      return;
+    }
+    console.log('New record inserted with ID:', results.insertId);
+    res.status(200).json({ message: 'Registered Successfully' });
+  })
+});
+
+app.get('/api/about',(req,res)=>{
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT * FROM About LIMIT ? OFFSET ?`;
+
+  const countQuery = `SELECT COUNT(*) AS total FROM About`;
+
+  pool.query(countQuery, (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching About Count");
+      return res.json({
+        status: 403,
+        error: "Error Fetching Records"
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      pool.query(query, [pageSize, offset], (err, result) => {
+        if (err) {
+          return res.json({
+            status: 403,
+            error:err
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize
+            },
+           
+          });
+        }
+      });
+    }
+  })
+});
+
+app.post('/api/addContact',(req,res)=>{
+  const data = req.body;
+  pool.query(`insert into Contact (id,name,email,message,OrgId,IsDeleted) values (uuid(), ?, ?, ? , ?,0)`,[
+    data.name,
+    data.email,
+    data.message,
+    data.orgId
+  ],(err,results,fields)=>{
+    if(err){
+      console.error('Error inserting new record: ' + err.stack);
+      res.status(500).json({ message: 'Error inserting new record' });
+      return;
+    }
+    console.log('New record inserted with ID:', results.insertId);
+    res.status(200).json({ message: 'Registered Successfully' });
+  })
+})
+
+app.get('/api/getContact',(req,res)=>{
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT * FROM Contact LIMIT ? OFFSET ?`;
+
+  const countQuery = `SELECT COUNT(*) AS total FROM Contact`;
+
+  pool.query(countQuery, (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching Contact Count");
+      return res.json({
+        status: 403,
+        error:err
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      pool.query(query, [pageSize, offset], (err, result) => {
+        if (err) {
+          return res.json({
+            status: 403,
+            error:err
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize
+            },
+           
+          });
+        }
+      });
+    }
+  })
+});
+
+app.post('/api/addFounders',(req,res)=>{
+  const data = req.body;
+  pool.query(`insert into Founders (id,name,Designation,Image,OrgId,IsDeleted) values (uuid(), ?, ?, ? , ?,0)`,[
+    data.name,
+    data.email,
+    data.message,
+    data.orgId
+  ],(err,results,fields)=>{
+    if(err){
+      console.error('Error inserting new record: ' + err.stack);
+      res.status(500).json({ message: 'Error inserting new record' });
+      return;
+    }
+    console.log('New record inserted with ID:', results.insertId);
+    res.status(200).json({ message: 'Registered Successfully' });
+  })
+});
+
+app.get('/api/getFounders',(req,res)=>{
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT * FROM Founders LIMIT ? OFFSET ?`;
+
+  const countQuery = `SELECT COUNT(*) AS total FROM Founders`;
+
+  pool.query(countQuery, (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching Founders Count");
+      return res.json({
+        status: 403,
+        error:err
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      pool.query(query, [pageSize, offset], (err, result) => {
+        if (err) {
+          return res.json({
+            status: 403,
+            error:err
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize
+            },
+           
+          });
+        }
+      });
+    }
+  })
+});
+
 
 const port = 3000;
 app.listen(port, () => {
