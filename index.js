@@ -61,17 +61,17 @@ app.post('/api/addorganization', (req, res) => {
   );
 
 });
-app.put('/api/updateOrganization/:id', (req, res) => {
+app.put('/api/updateOrganization', (req, res) => {
   const data = req.body;
-  const id= req.params.id;
   pool.query(
-    `update Organization set name=?, address=?, phonenumber=?,email=? where id=${id}`,
+    `update Organization set name=?, address=?, phonenumber=?,email=? where id=?`,
     [
       data.name,
       data.address,
       data.phonenumber,
       data.email,
-      data.image
+      data.image,
+      data.id
     ],
     (error, results, fields) => {
       if (error) {
@@ -86,9 +86,18 @@ app.put('/api/updateOrganization/:id', (req, res) => {
 
 });
 
-app.delete('/api/deleteOrganization/:id',(req,res)=>{
-  const id = req.params.id;
-  pool.query(`update Organization set isdeleted=1 where id=${id}`)
+app.delete('/api/deleteOrganization',(req,res)=>{
+  const data=req.body.id
+  pool.query(`update Organization set isdeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Organization deleted Successfully'
+      })
+    }
+  })
 })
 
 
@@ -157,6 +166,34 @@ app.post('/api/addAbout', (req, res) => {
   })
 });
 
+app.put('/api/updateAbout',(req,res)=>{
+  const data=req.body;
+  pool.query(`update About set title=?, description=? where id=?`,[data.title, data.description, data.id],(err,res)=>{
+    if(err){
+      console.error("Error updating data",err)
+    }else{
+      res.json({
+        status:200,
+        message:res
+      })
+    }
+  })
+})
+
+app.delete('/api/deleteAbout',(req,res)=>{
+  const data=req.body.id;
+  pool.query(`update About set IsDeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error("Error Inserting record",err)
+    }else{
+      res.json({
+        status:200,
+        message:'About Data Deleted Successfully'
+      })
+    }
+  })
+})
+
 app.get('/api/about', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
@@ -219,6 +256,7 @@ app.post('/api/addContact', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 })
+
 
 app.get('/api/getContact', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
@@ -283,6 +321,34 @@ app.post('/api/addFounders', (req, res) => {
   })
 });
 
+app.put('/api/updateFounders',(req,res)=>{
+  const data=req.body;
+  pool.query(`update Founders set name=?, Designation=? where id=?`,[data.name, data.designation, data.id],(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:res
+      })
+    }
+  })
+})
+
+app.delete('/api/deleteFounders',(req,res)=>{
+  const data = req.body.id;
+  pool.query(`update Founders set IsDeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Deleted SuccessFully'
+      })
+    }
+  })
+})
+
 app.get('/api/getFounders', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
@@ -345,6 +411,34 @@ app.post('/api/addMission', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 });
+
+app.put('/api/updateMission',(req,res)=>{
+  const data= req.body;
+  pool.query(`update Missions set title=?, description=? where id=?`,[data.title, data.description,data.id ],(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Mission Updated Successfully'
+      })
+    }
+  })
+})
+
+app.delete('/api/deleteMission',(req,res)=>{
+  const data= req.body.id;
+  pool.query(`update Missions set IsDeleted=1 where id=${id}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Mission Deleted Successfully'
+      })
+    }
+  })
+})
 
 app.get('/api/getMission', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
@@ -453,6 +547,19 @@ app.get('/api/getMissionImages', (req, res) => {
     }
   })
 });
+app.delete('/api/deleteMissionImage',(req,res)=>{
+  const data = req.body.id;
+  pool.query(`update MissionImages set IsDeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Images Deleted Successfully'
+      })
+    }
+  })
+})
 app.post('/api/addProject', (req, res) => {
   const data = req.body;
   pool.query(`insert into projects (id,name,description,bibleverse,OrgId,IsDeleted) values (uuid(), ?, ?,?, ?,0)`, [
@@ -471,6 +578,35 @@ app.post('/api/addProject', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 });
+
+app.put('/api/updateProject',(req,res)=>{
+  const data = req.body;
+  pool.query(`update projects set name = ?, description=?, bibleverse=? where id=?`,[data.name,
+    data.description, data.bibleverse,data.id],(err,res)=>{
+      if(err){
+        console.error(err)
+      }else{
+        res.json({
+          status:200,
+          message:'Project Details Updated Successfully'
+        })
+      }
+    })
+});
+
+app.delete('/api/deleteProject',(req,res)=>{
+  const data = req.body.id;
+  pool.query(`delete projects set IsDeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Project Deleted Successfully'
+      })
+    }
+  })
+})
 
 app.get('/api/getProjects', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
@@ -533,6 +669,19 @@ app.post('/api/addSocialEvents', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 });
+app.delete('/api/deleteSocialEvents',(req,res)=>{
+  const data = req.body.id
+  pool.query(`update SocialEvents set IsDeleted=1 where id=${data}`,(err,res)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Social Events Deleted Successfully'
+      })
+    }
+  })
+})
 
 app.get('/api/getSocialEvents', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
@@ -594,6 +743,34 @@ app.post('/api/addUsers', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 });
+
+app.put('/api/updateusers',(req,res)=>{
+  const data = req.body;
+  pool.query(`update Users set username = ?, password = ? where id=?`,[data.username, data.password, data.id],(err,results)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Users Updated Successfully'
+      })
+    }
+  })
+});
+
+app.delete('/api/deleteUsers',(req,res)=>{
+  const data = req.body.id;
+  pool.query(`update Users set IsDeleted=1 where id=${data}`,(err,results)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Users Deleted Successfully'
+      })
+    }
+  })
+})
 app.get('/api/getUsers', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
