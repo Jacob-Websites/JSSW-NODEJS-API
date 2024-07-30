@@ -2,6 +2,11 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const app = express();
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger.config');
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
 const path = require('path');
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -32,6 +37,7 @@ app.use(express.json());
 app.get('/swagger', (req, res) => {
   res.sendFile(path.join(__dirname, 'swagger.yaml'));
 });
+
 app.post('/api/addorganization', (req, res) => {
   const data = req.body;
   pool.query(
@@ -55,6 +61,36 @@ app.post('/api/addorganization', (req, res) => {
   );
 
 });
+app.put('/api/updateOrganization/:id', (req, res) => {
+  const data = req.body;
+  const id= req.params.id;
+  pool.query(
+    `update Organization set name=?, address=?, phonenumber=?,email=? where id=${id}`,
+    [
+      data.name,
+      data.address,
+      data.phonenumber,
+      data.email,
+      data.image
+    ],
+    (error, results, fields) => {
+      if (error) {
+        console.error('Error inserting new record: ' + error.stack);
+        res.status(500).json({ message: 'Error inserting new record' });
+        return;
+      }
+      console.log('New record inserted with ID:', results.insertId);
+      res.status(200).json({ message: 'Updated Successfully' });
+    }
+  );
+
+});
+
+app.delete('/api/deleteOrganization/:id',(req,res)=>{
+  const id = req.params.id;
+  pool.query(`update Organization set isdeleted=1 where id=${id}`)
+})
+
 
 
 
@@ -64,9 +100,9 @@ app.get('/api/Organization', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM Organization LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,address,phone_number as PhoneNumber,email,image FROM Organization where isdeleted=0 LIMIT ? OFFSET ? `;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM Organization`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Organization where isdeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -127,9 +163,9 @@ app.get('/api/about', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM About LIMIT ? OFFSET ?`;
+  const query = `SELECT id,title,description,OrgId as OrganizationId FROM About where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM About`;
+  const countQuery = `SELECT COUNT(*) AS total FROM About where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -190,9 +226,9 @@ app.get('/api/getContact', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM Contact LIMIT ? OFFSET ?`;
+  const query = `SELECT name,email,message,OrgId as OrganizationId FROM Contact where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM Contact`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Contact where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -253,9 +289,9 @@ app.get('/api/getFounders', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM Founders LIMIT ? OFFSET ?`;
+  const query = `SELECT name,Designation,Image,OrgId as OrganizationId FROM Founders where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM Founders`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Founders where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -316,9 +352,9 @@ app.get('/api/getMission', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM Missions LIMIT ? OFFSET ?`;
+  const query = `SELECT id,title,description,OrgId as OrganizationId FROM Missions where IsDeleted=0  LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM Missions`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Missions where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -379,9 +415,9 @@ app.get('/api/getMissionImages', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM MissionImages LIMIT ? OFFSET ?`;
+  const query = `SELECT name,images,missionid,OrgId as OrganizationId FROM MissionImages where IsDeleted=0 where LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM MissionImages`;
+  const countQuery = `SELECT COUNT(*) AS total FROM MissionImages where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -442,9 +478,9 @@ app.get('/api/getProjects', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM projects LIMIT ? OFFSET ?`;
+  const query = `SELECT name,description,bibleverse,orgId as OrganizationId FROM projects where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM projects`;
+  const countQuery = `SELECT COUNT(*) AS total FROM projects where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -504,9 +540,9 @@ app.get('/api/getSocialEvents', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM SocialEvents LIMIT ? OFFSET ?`;
+  const query = `SELECT name,description,image,OrgId as OrganizationId FROM SocialEvents where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM SocialEvents`;
+  const countQuery = `SELECT COUNT(*) AS total FROM SocialEvents where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -564,9 +600,9 @@ app.get('/api/getUsers', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT * FROM Users LIMIT ? OFFSET ?`;
+  const query = `SELECT username,password,OrgId as OrganizationId FROM Users where IsDeleted=0 LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM Users`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Users where IsDeleted=0`;
 
   pool.query(countQuery, (err, countResult) => {
     if (err) {
@@ -602,6 +638,8 @@ app.get('/api/getUsers', (req, res) => {
     }
   })
 });
+
+
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}.`);
