@@ -9,6 +9,7 @@ module.exports = {
     ],
     parserOptions: {
         ecmaVersion: 12,
+        sourceType: 'module', // Ensure this is set correctly
     },
     rules: {
         // Add your custom rules here
