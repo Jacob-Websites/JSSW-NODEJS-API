@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
+const bodyParser = require('body-parser');
 const app = express();
 const path = require('path');
 const pool = mysql.createPool({
@@ -11,7 +12,7 @@ const pool = mysql.createPool({
   connectTimeout: 10000,
   acquireTimeout: 10000,
 });
-pool.getConnection((err) => {
+pool.getConnection((err, connection) => {
   if (err) {
     console.log('Error getting database connection: ', err);
 
@@ -19,7 +20,7 @@ pool.getConnection((err) => {
     console.log("DB Connected")
   }
 })
-app.get('/', (res) => {
+app.get('/', (req, res) => {
   res.json({
     status: 200,
     message: "Welcome to JSSW MINISTRIES"
@@ -28,7 +29,7 @@ app.get('/', (res) => {
 })
 app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 app.use(express.json());
-app.get('/swagger', (res) => {
+app.get('/swagger', (req, res) => {
   res.sendFile(path.join(__dirname, 'swagger.yaml'));
 });
 app.post('/api/addorganization', (req, res) => {
@@ -42,7 +43,7 @@ app.post('/api/addorganization', (req, res) => {
       data.email,
       data.image
     ],
-    (error, results) => {
+    (error, results, fields) => {
       if (error) {
         console.error('Error inserting new record: ' + error.stack);
         res.status(500).json({ message: 'Error inserting new record' });
@@ -109,7 +110,7 @@ app.post('/api/addAbout', (req, res) => {
     data.title,
     data.description,
     data.orgId,
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + error.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -172,7 +173,7 @@ app.post('/api/addContact', (req, res) => {
     data.email,
     data.message,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -235,7 +236,7 @@ app.post('/api/addFounders', (req, res) => {
     data.email,
     data.message,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -298,7 +299,7 @@ app.post('/api/addMission', (req, res) => {
     data.email,
     data.description,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -361,7 +362,7 @@ app.post('/api/addMissionImages', (req, res) => {
     data.images,
     data.missionid,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -424,7 +425,7 @@ app.post('/api/addProject', (req, res) => {
     data.description,
     data.bibleverse,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -486,7 +487,7 @@ app.post('/api/addSocialEvents', (req, res) => {
     data.description,
     data.image,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
@@ -547,7 +548,7 @@ app.post('/api/addUsers', (req, res) => {
     data.username,
     data.password,
     data.orgId
-  ], (err, results) => {
+  ], (err, results, fields) => {
     if (err) {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
