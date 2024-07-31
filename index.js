@@ -157,7 +157,7 @@ app.post('/api/addAbout', (req, res) => {
     data.orgId,
   ], (err, results, fields) => {
     if (err) {
-      console.error('Error inserting new record: ' + error.stack);
+      console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
       return;
     }
