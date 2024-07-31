@@ -147,8 +147,6 @@ app.get('/api/Organization', (req, res) => {
     }
   });
 });
-
-
 app.post('/api/addAbout', (req, res) => {
   const data = req.body;
   pool.query(`insert into About (id,title,description,OrgId,IsDeleted) values (uuid(), ?, ? , ?,0)`, [
