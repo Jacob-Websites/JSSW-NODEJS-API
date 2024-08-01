@@ -20,7 +20,7 @@ jobs:
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-    - name: Set up Docker Buildx
+    - name: Set up Docker Build
       uses: docker/setup-buildx-action@v2
 
     - name: Build and push Docker image
@@ -36,5 +36,6 @@ jobs:
     needs: build  # This ensures the deploy job runs only after the build job succeeds
     
     steps:
+      
     - name: Trigger Render Deploy
       run: curl -X POST "${{ secrets.TriggerRender }}"
