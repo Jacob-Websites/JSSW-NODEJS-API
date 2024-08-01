@@ -1,13 +1,9 @@
 const express = require('express');
 const mysql = require('mysql');
-const bodyParser = require('body-parser');
 const app = express();
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swagger.config');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
-const path = require('path');
 const pool = mysql.createPool({
   connectionLimit: 10,
   host: 'bzgbc53adkctrr2boqnh-mysql.services.clever-cloud.com',
@@ -32,11 +28,7 @@ app.get('/', (req, res) => {
   })
 
 })
-app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 app.use(express.json());
-app.get('/swagger', (req, res) => {
-  res.sendFile(path.join(__dirname, 'swagger.yaml'));
-});
 
 app.post('/api/addorganization', (req, res) => {
   const data = req.body;
@@ -147,6 +139,25 @@ app.get('/api/Organization', (req, res) => {
     }
   });
 });
+
+app.get('/api/getbyIdOrganization/:id', (req, res) => {
+  const data = req.params.id;
+  const sqlQuery = 'SELECT id, name, Address, Phone_number as PhoneNumber, email, image FROM Organization WHERE id = ?';
+
+  pool.query(sqlQuery, [data], (err, results) => {
+    if (err) {
+      res.status(500).json({
+        error: err
+      });
+    } else {
+      res.json({
+        status: 200,
+        data: results
+      });
+    }
+  });
+});
+
 app.post('/api/addAbout', (req, res) => {
   const data = req.body;
   pool.query(`insert into About (id,title,description,OrgId,IsDeleted) values (uuid(), ?, ? , ?,0)`, [
