@@ -1,13 +1,9 @@
 const express = require('express');
 const mysql = require('mysql');
-const bodyParser = require('body-parser');
 const app = express();
-const swaggerJSDoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swagger.config');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
-const path = require('path');
 const pool = mysql.createPool({
   connectionLimit: 10,
   host: 'bzgbc53adkctrr2boqnh-mysql.services.clever-cloud.com',
@@ -32,11 +28,7 @@ app.get('/', (req, res) => {
   })
 
 })
-app.use('/swagger-ui', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 app.use(express.json());
-app.get('/swagger', (req, res) => {
-  res.sendFile(path.join(__dirname, 'swagger.yaml'));
-});
 
 app.post('/api/addorganization', (req, res) => {
   const data = req.body;
@@ -88,7 +80,7 @@ app.put('/api/updateOrganization', (req, res) => {
 
 app.delete('/api/deleteOrganization',(req,res)=>{
   const data=req.body.id
-  pool.query(`update Organization set isdeleted=1 where id=${data}`,(err,res)=>{
+  pool.query(`update Organization set isdeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
     }else{
@@ -147,6 +139,25 @@ app.get('/api/Organization', (req, res) => {
     }
   });
 });
+
+app.get('/api/getbyIdOrganization/:id', (req, res) => {
+  const data = req.params.id;
+  const sqlQuery = 'SELECT id, name, Address, Phone_number as PhoneNumber, email, image FROM Organization WHERE id = ?';
+
+  pool.query(sqlQuery, [data], (err, results) => {
+    if (err) {
+      res.status(500).json({
+        error: err
+      });
+    } else {
+      res.json({
+        status: 200,
+        data: results
+      });
+    }
+  });
+});
+
 app.post('/api/addAbout', (req, res) => {
   const data = req.body;
   pool.query(`insert into About (id,title,description,OrgId,IsDeleted) values (uuid(), ?, ? , ?,0)`, [
@@ -426,7 +437,7 @@ app.put('/api/updateMission',(req,res)=>{
 
 app.delete('/api/deleteMission',(req,res)=>{
   const data= req.body.id;
-  pool.query(`update Missions set IsDeleted=1 where id=${id}`,(err,res)=>{
+  pool.query(`update Missions set IsDeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
     }else{
@@ -547,7 +558,7 @@ app.get('/api/getMissionImages', (req, res) => {
 });
 app.delete('/api/deleteMissionImage',(req,res)=>{
   const data = req.body.id;
-  pool.query(`update MissionImages set IsDeleted=1 where id=${data}`,(err,res)=>{
+  pool.query(`update MissionImages set IsDeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
     }else{
@@ -594,7 +605,7 @@ app.put('/api/updateProject',(req,res)=>{
 
 app.delete('/api/deleteProject',(req,res)=>{
   const data = req.body.id;
-  pool.query(`delete projects set IsDeleted=1 where id=${data}`,(err,res)=>{
+  pool.query(`delete projects set IsDeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
     }else{
@@ -669,7 +680,7 @@ app.post('/api/addSocialEvents', (req, res) => {
 });
 app.delete('/api/deleteSocialEvents',(req,res)=>{
   const data = req.body.id
-  pool.query(`update SocialEvents set IsDeleted=1 where id=${data}`,(err,res)=>{
+  pool.query(`update SocialEvents set IsDeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
     }else{
@@ -758,7 +769,7 @@ app.put('/api/updateusers',(req,res)=>{
 
 app.delete('/api/deleteUsers',(req,res)=>{
   const data = req.body.id;
-  pool.query(`update Users set IsDeleted=1 where id=${data}`,(err,results)=>{
+  pool.query(`update Users set IsDeleted=1 where id=?`,[data],(err,results)=>{
     if(err){
       console.error(err)
     }else{
@@ -813,6 +824,68 @@ app.get('/api/getUsers', (req, res) => {
     }
   })
 });
+
+app.post('/api/Addadminusers',(req,res)=>{
+  const data=req.body;
+  pool.query(`insert into AdministrationUsers (id, name, username, password,IsDeleted) values (uuid(), ?, ?,?,0)`,[data.name,
+    data.username, data.password],(err,results)=>{
+      if(err){
+        res.status(403).json({
+          error:err
+        })
+      }else{
+        res.json({
+          status:200,
+          data:'Admin User Registered Successfully'
+        })
+      }
+    })
+});
+
+app.get('/api/getAdminUsers',(req,res)=>{
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT name,username,password FROM AdministrationUsers where IsDeleted=0 LIMIT ? OFFSET ?`;
+
+  const countQuery = `SELECT COUNT(*) AS total FROM AdministrationUsers where IsDeleted=0`;
+
+  pool.query(countQuery, (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching Admin Users Count");
+      return res.json({
+        status: 403,
+        error: err
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      pool.query(query, [pageSize, offset], (err, result) => {
+        if (err) {
+          return res.json({
+            status: 403,
+            error: err
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize
+            },
+
+          });
+        }
+      });
+    }
+  })
+})
 
 
 const port = 3000;
