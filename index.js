@@ -899,6 +899,7 @@ app.post('/api/addRoutes',(req,res)=>{
       res.status(200).json({
         data:"Route added Successfully"
       })
+      console.log(results)
     }
   })
 });
