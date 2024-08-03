@@ -889,7 +889,7 @@ app.get('/api/getAdminUsers',(req,res)=>{
 
 app.post('/api/addRoutes',(req,res)=>{
   const data=req.body;
-  pool.query(`insert into Routes (id,name,link,OrgId,IsDeleted) values (uuid(),?,?,?,0)`,[data.name,data.link,data.orgId],(err,results)=>{
+  pool.query(`insert into Routes (id,name,link,OrganizationId,IsDeleted) values (uuid(),?,?,?,0)`,[data.name,data.link,data.orgId],(err,results)=>{
     if(err){
       console.log(err)
       res.status(500).json({
@@ -910,7 +910,7 @@ app.get('/api/GetRoutes',(req,res)=>{
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT id,name,link,OrgId FROM Routes where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,link,OrganizationId FROM Routes where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM Routes where IsDeleted=0`;
 
