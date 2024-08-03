@@ -273,7 +273,7 @@ app.get('/api/getContact', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,email,message,OrgId as OrganizationId FROM Contact where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,email,message,OrgId as OrganizationId FROM Contact where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM Contact where IsDeleted=0`;
 
@@ -364,7 +364,7 @@ app.get('/api/getFounders', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,Designation,Image,OrgId as OrganizationId FROM Founders where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,Designation,Image,OrgId as OrganizationId FROM Founders where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM Founders where IsDeleted=0`;
 
@@ -518,7 +518,7 @@ app.get('/api/getMissionImages', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,images,missionid,OrgId as OrganizationId FROM MissionImages where IsDeleted=0 where LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,images,missionid,OrgId as OrganizationId FROM MissionImages where IsDeleted=0 where LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM MissionImages where IsDeleted=0`;
 
@@ -623,7 +623,7 @@ app.get('/api/getProjects', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,description,bibleverse,orgId as OrganizationId FROM projects where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,description,bibleverse,orgId as OrganizationId FROM projects where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM projects where IsDeleted=0`;
 
@@ -698,7 +698,7 @@ app.get('/api/getSocialEvents', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,description,image,OrgId as OrganizationId FROM SocialEvents where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,description,image,OrgId as OrganizationId FROM SocialEvents where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM SocialEvents where IsDeleted=0`;
 
@@ -786,7 +786,7 @@ app.get('/api/getUsers', (req, res) => {
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT username,password,OrgId as OrganizationId FROM Users where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,username,password,OrgId as OrganizationId FROM Users where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM Users where IsDeleted=0`;
 
@@ -848,7 +848,7 @@ app.get('/api/getAdminUsers',(req,res)=>{
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT name,username,password FROM AdministrationUsers where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id,name,username,password FROM AdministrationUsers where IsDeleted=0 LIMIT ? OFFSET ?`;
 
   const countQuery = `SELECT COUNT(*) AS total FROM AdministrationUsers where IsDeleted=0`;
 
@@ -885,7 +885,70 @@ app.get('/api/getAdminUsers',(req,res)=>{
       });
     }
   })
-})
+});
+
+app.post('/api/addRoutes',(req,res)=>{
+  const data=req.body;
+  pool.query(`insert into Routes (id,name,link,OrgId,IsDeleted) values (uuid(),?,?,?,0)`,[data.name,data.link,data.orgId],(err,results)=>{
+    if(err){
+      console.log(err)
+      res.status(500).json({
+        message:err
+      })
+    }else{
+      res.status(200).json({
+        data:"Route added Successfully"
+      })
+    }
+  })
+});
+
+app.get('/api/GetRoutes',(req,res)=>{
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT id,name,link,OrgId FROM Routes where IsDeleted=0 LIMIT ? OFFSET ?`;
+
+  const countQuery = `SELECT COUNT(*) AS total FROM Routes where IsDeleted=0`;
+
+  pool.query(countQuery, (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching Admin Users Count");
+      return res.json({
+        status: 403,
+        error: err
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      pool.query(query, [pageSize, offset], (err, result) => {
+        if (err) {
+          return res.json({
+            status: 403,
+            error: err
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize
+            },
+
+          });
+        }
+      });
+    }
+  })
+});
+
+
 
 
 const port = 3000;
