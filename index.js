@@ -6,10 +6,10 @@ app.use(bodyParser.json());
 
 const pool = mysql.createPool({
   connectionLimit: 10,
-  host: 'bzgbc53adkctrr2boqnh-mysql.services.clever-cloud.com',
+  host: 'btzothksikyd0tv6zljh-mysql.services.clever-cloud.com',
   user: 'ub4bzrramjnmzuys',
   password: 'jRKyeDjwQ7E5WNNLWpwU',
-  database: 'bzgbc53adkctrr2boqnh',
+  database: 'btzothksikyd0tv6zljh',
   connectTimeout: 10000,
   acquireTimeout: 10000,
 });
