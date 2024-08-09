@@ -2,7 +2,10 @@ const express = require('express');
 const mysql = require('mysql');
 const app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '800mb' })); // Adjust the limit as needed
+
+// Your routes and other middleware
+app.use(bodyParser.urlencoded({ extended: true, limit: '800mb' }));
 const cors = require('cors');
 app.use(cors());
 
