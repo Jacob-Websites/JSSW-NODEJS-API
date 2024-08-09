@@ -3,6 +3,9 @@ const mysql = require('mysql');
 const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
+const cors = require('cors');
+app.use(cors());
+
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -53,6 +56,19 @@ app.post('/api/addorganization', (req, res) => {
   );
 
 });
+app.get('/api/Organization/:id',(req,res)=>{
+  const id=req.params.id;
+  pool.query(`select name,address,phone_number,email,image from Organization where id=?`,[id],(err,results)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        data:results
+      })
+    }
+  })
+})
 app.put('/api/updateOrganization', (req, res) => {
   const data = req.body;
   pool.query(
@@ -889,7 +905,7 @@ app.get('/api/getAdminUsers',(req,res)=>{
 
 app.post('/api/addRoutes',(req,res)=>{
   const data=req.body;
-  pool.query(`insert into Routes (id,name,link,OrgId,IsDeleted) values (uuid(),?,?,?,0)`,[data.name,data.link,data.orgId],(err,results)=>{
+  pool.query(`insert into Routes (id,name,link,OrganizationId	,Component,IsDeleted) values (uuid(),?,?,?,?,0)`,[data.name,data.link,data.orgId,data.component],(err,results)=>{
     if(err){
       console.log(err)
       res.status(500).json({
@@ -904,49 +920,32 @@ app.post('/api/addRoutes',(req,res)=>{
 });
 
 app.get('/api/GetRoutes',(req,res)=>{
-  const currentPage = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 5;
-
-  const offset = (currentPage - 1) * pageSize;
-
-  const query = `SELECT id,name,link,OrgId FROM Routes where IsDeleted=0 LIMIT ? OFFSET ?`;
-
-  const countQuery = `SELECT COUNT(*) AS total FROM Routes where IsDeleted=0`;
-
-  pool.query(countQuery, (err, countResult) => {
-    if (err) {
-      console.error("Error Fetching Admin Users Count");
-      return res.json({
-        status: 403,
-        error: err
-      });
-    } else {
-      const totalRecords = countResult[0].total;
-      const totalPages = Math.ceil(totalRecords / pageSize);
-
-      pool.query(query, [pageSize, offset], (err, result) => {
-        if (err) {
-          return res.json({
-            status: 403,
-            error: err
-          });
-        } else {
-          res.json({
-            status: 200,
-            data: {
-              result,
-              totalRecords,
-              totalPages,
-              currentPage: currentPage,
-              pageSize
-            },
-
-          });
-        }
-      });
+  pool.query(`SELECT id,name,link,OrganizationId	,Component FROM Routes where IsDeleted=0`,(err,results)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        data:results
+      })
     }
   })
-});
+  });
+
+app.delete('/api/deleteRoute',(req,res)=>{
+  const data = req.body.id;
+  pool.query(`update Routes set isdeleted=1 where id=?`,[data],(err,results)=>{
+    if(err){
+      console.error(err)
+    }else{
+      res.json({
+        status:200,
+        message:'Routes deleted Successfully'
+      })
+    }
+  });
+
+})
 
 
 
