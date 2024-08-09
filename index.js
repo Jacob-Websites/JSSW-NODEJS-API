@@ -905,7 +905,7 @@ app.get('/api/getAdminUsers',(req,res)=>{
 
 app.post('/api/addRoutes',(req,res)=>{
   const data=req.body;
-  pool.query(`insert into Routes (id,name,link,OrganizationId	,Component,IsDeleted) values (uuid(),?,?,?,?,0)`,[data.name,data.link,data.orgId,data.component],(err,results)=>{
+  pool.query(`insert into Routes (id,name,link,OrganizationId	,Component,displayOrder,IsDeleted) values (uuid(),?,?,?,?,?,0)`,[data.name,data.link,data.orgId,data.component,data.displayorder],(err,results)=>{
     if(err){
       console.log(err)
       res.status(500).json({
@@ -920,7 +920,7 @@ app.post('/api/addRoutes',(req,res)=>{
 });
 
 app.get('/api/GetRoutes',(req,res)=>{
-  pool.query(`SELECT id,name,link,OrganizationId	,Component FROM Routes where IsDeleted=0`,(err,results)=>{
+  pool.query(`SELECT id,name,link,OrganizationId	,Component,displayOrder FROM Routes where IsDeleted=0`,(err,results)=>{
     if(err){
       console.error(err)
     }else{
