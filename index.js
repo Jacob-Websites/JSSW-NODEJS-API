@@ -3,13 +3,16 @@ const mysql = require('mysql');
 const app = express();
 const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '800mb' })); // Adjust the limit as needed
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 // Your routes and other middleware
 app.use(bodyParser.urlencoded({ extended: true, limit: '800mb' }));
 const cors = require('cors');
 app.use(cors());
-
-
+const accessTokenSecret = 'youraccesstokensecret';
+const refreshTokenSecret = 'yourrefreshtokensecret';
+let refreshTokens = [];
 const pool = mysql.createPool({
   connectionLimit: 10,
   host: 'btzothksikyd0tv6zljh-mysql.services.clever-cloud.com',
@@ -222,50 +225,54 @@ app.delete('/api/deleteAbout',(req,res)=>{
   })
 })
 
-app.get('/api/about', (req, res) => {
+
+
+app.get('/api/GetAbout', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
+  const OrgId = req.body.id;
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT id,title,description,OrgId as OrganizationId FROM About where IsDeleted=0 LIMIT ? OFFSET ?`;
+  const query = `SELECT id, title, description, OrgId as OrganizationId FROM About WHERE IsDeleted = 0 AND OrgId = ? LIMIT ? OFFSET ?`;
 
-  const countQuery = `SELECT COUNT(*) AS total FROM About where IsDeleted=0`;
+  const countQuery = `SELECT COUNT(*) AS total FROM About WHERE IsDeleted = 0 AND OrgId = ?`;
 
-  pool.query(countQuery, (err, countResult) => {
-    if (err) {
-      console.error("Error Fetching About Count");
-      return res.json({
-        status: 403,
-        error: "Error Fetching Records"
-      });
-    } else {
-      const totalRecords = countResult[0].total;
-      const totalPages = Math.ceil(totalRecords / pageSize);
-
-      pool.query(query, [pageSize, offset], (err, result) => {
-        if (err) {
+  pool.query(countQuery, [OrgId], (err, countResult) => {
+      if (err) {
+          console.error("Error Fetching About Count", err);
           return res.json({
-            status: 403,
-            error: err
+              status: 403,
+              error: "Error Fetching Records"
           });
-        } else {
-          res.json({
-            status: 200,
-            data: {
-              result,
-              totalRecords,
-              totalPages,
-              currentPage: currentPage,
-              pageSize
-            },
+      } else {
+          const totalRecords = countResult[0].total;
+          const totalPages = Math.ceil(totalRecords / pageSize);
 
+          pool.query(query, [OrgId, pageSize, offset], (err, result) => {
+              if (err) {
+                  console.error("Error Fetching About Records", err);
+                  return res.json({
+                      status: 403,
+                      error: err
+                  });
+              } else {
+                  res.json({
+                      status: 200,
+                      data: {
+                          result,
+                          totalRecords,
+                          totalPages,
+                          currentPage: currentPage,
+                          pageSize
+                      },
+                  });
+              }
           });
-        }
-      });
-    }
-  })
+      }
+  });
 });
+
 
 app.post('/api/addContact', (req, res) => {
   const data = req.body;
@@ -330,6 +337,96 @@ app.get('/api/getContact', (req, res) => {
     }
   })
 });
+
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+      return res.json({
+        status:400,
+        message: 'Username and password are required' 
+      })
+  }
+
+  pool.query('SELECT * FROM Users WHERE username = ?', [username], (error, results) => {
+      if (error) {
+          return res.status(500).json({ message: 'Server error' });
+      }
+
+      if (results.length === 0) {
+          return res.status(401).json({ message: 'Invalid username or password' });
+      }
+
+      const user = results[0];
+      if(password === user.password){
+ const accessToken = jwt.sign({ username: user.username, id: user.id }, accessTokenSecret, { expiresIn: '20m' });
+ const refreshToken = jwt.sign({ username: user.username, id: user.id }, refreshTokenSecret);
+refreshTokens.push(refreshToken);
+return res.status(200).json({
+    message: 'Login successful',
+    accessToken,
+    refreshToken,
+    organizationId:results[0].Orgid
+});
+      }else{
+        return res.status(401).json({ message: 'Invalid username or password' });
+
+      }
+
+     
+  });
+});
+
+// Refresh token route
+app.post('/api/token', (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+      return res.status(403).json({ message: 'Refresh token is required' });
+  }
+
+  if (!refreshTokens.includes(token)) {
+      return res.status(403).json({ message: 'Invalid refresh token' });
+  }
+
+  jwt.verify(token, refreshTokenSecret, (err, user) => {
+      if (err) {
+          return res.status(403).json({ message: 'Invalid refresh token' });
+      }
+
+      const accessToken = jwt.sign({ username: user.username, id: user.id }, accessTokenSecret, { expiresIn: '20m' });
+
+      res.json({
+          accessToken
+      });
+  });
+});
+
+app.post('/api/logout', (req, res) => {
+  const { token } = req.body;
+  refreshTokens = refreshTokens.filter(t => t !== token);
+  res.status(200).json({ message: 'Logout successful' });
+});
+
+// Middleware to authenticate access tokens
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+      return res.sendStatus(401);
+  }
+
+  jwt.verify(token, accessTokenSecret, (err, user) => {
+      if (err) {
+          return res.sendStatus(403);
+      }
+
+      req.user = user;
+      next();
+  });
+}
+
 
 app.post('/api/addFounders', (req, res) => {
   const data = req.body;
