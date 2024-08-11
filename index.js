@@ -62,9 +62,9 @@ app.post('/api/addorganization', (req, res) => {
   );
 
 });
-app.get('/api/Organization/:id',(req,res)=>{
-  const id=req.params.id;
-  pool.query(`select name,address,phone_number,email,image from Organization where id=?`,[id],(err,results)=>{
+app.get('/api/organizations',(req,res)=>{
+  const id=req.query.id;
+  pool.query(`select name,address,phone_number,email,image from Organization where id=? `,[id],(err,results)=>{
     if(err){
       console.error(err)
     }else{
@@ -432,8 +432,8 @@ app.post('/api/addFounders', (req, res) => {
   const data = req.body;
   pool.query(`insert into Founders (id,name,Designation,Image,OrgId,IsDeleted) values (uuid(), ?, ?, ? , ?,0)`, [
     data.name,
-    data.email,
-    data.message,
+    data.designation,
+    data.image,
     data.orgId
   ], (err, results, fields) => {
     if (err) {
@@ -448,13 +448,14 @@ app.post('/api/addFounders', (req, res) => {
 
 app.put('/api/updateFounders',(req,res)=>{
   const data=req.body;
-  pool.query(`update Founders set name=?, Designation=? where id=?`,[data.name, data.designation, data.id],(err,res)=>{
+  console.log(data)
+  pool.query(`update Founders set name=?, Designation=? where id=?`,[data.name, data.designation, data.id],(err,results)=>{
     if(err){
       console.error(err)
     }else{
       res.json({
         status:200,
-        message:res
+        message:results
       })
     }
   })
@@ -475,6 +476,61 @@ app.delete('/api/deleteFounders',(req,res)=>{
 })
 
 app.get('/api/getFounders', (req, res) => {
+  const currentPage = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 5;
+  const OrgId = req.query.id; // Get OrgId from the query string
+
+  const offset = (currentPage - 1) * pageSize;
+
+  const query = `SELECT id, name, Designation, Image, OrgId as OrganizationId FROM Founders WHERE IsDeleted = 0 AND OrgId = ? LIMIT ? OFFSET ?`;
+  const countQuery = `SELECT COUNT(*) AS total FROM Founders WHERE IsDeleted = 0 AND OrgId = ?`;
+
+  if (!OrgId) {
+    return res.json({
+      status: 400,
+      error: 'OrgId is required',
+    });
+  }
+
+  // Correctly pass the OrgId to the countQuery
+  pool.query(countQuery, [OrgId], (err, countResult) => {
+    if (err) {
+      console.error("Error Fetching Founders Count", err);
+      return res.json({
+        status: 403,
+        error: err,
+      });
+    } else {
+      const totalRecords = countResult[0].total;
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      // Pass the OrgId, pageSize, and offset correctly to the query
+      pool.query(query, [OrgId, pageSize, offset], (err, result) => {
+        if (err) {
+          console.error("Error Fetching Founders", err);
+          return res.json({
+            status: 403,
+            error: err,
+          });
+        } else {
+          res.json({
+            status: 200,
+            data: {
+              result,
+              totalRecords,
+              totalPages,
+              currentPage: currentPage,
+              pageSize,
+            },
+          });
+        }
+      });
+    }
+  });
+});
+
+
+app.get('/api/GetFounders',(req,res)=>{
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
 
@@ -517,7 +573,7 @@ app.get('/api/getFounders', (req, res) => {
       });
     }
   })
-});
+})
 
 app.post('/api/addMission', (req, res) => {
   const data = req.body;
