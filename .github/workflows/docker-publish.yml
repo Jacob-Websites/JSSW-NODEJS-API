@@ -33,7 +33,7 @@ jobs:
 
   trigger-deploy:
     runs-on: ubuntu-latest
-    needs: build  # This ensures the deploy job runs only after the build job succeeds
+    needs: build 
     
     steps:
       
