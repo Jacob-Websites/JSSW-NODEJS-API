@@ -5,6 +5,12 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json({ limit: '800mb' })); // Adjust the limit as needed
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+const logFile = fs.createWriteStream('db.log', { flags: 'a' });
+const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
+app.use(morgan('combined', { stream: logStream }));
 
 // Your routes and other middleware
 app.use(bodyParser.urlencoded({ extended: true, limit: '800mb' }));
@@ -28,6 +34,7 @@ pool.getConnection((err, connection) => {
 
   } else {
     console.log("DB Connected")
+
   }
 })
 app.get('/', (req, res) => {
@@ -35,6 +42,8 @@ app.get('/', (req, res) => {
     status: 200,
     message: "Welcome to JSSW MINISTRIES"
   })
+  res.send('JSSW Ministiries');
+
 
 })
 app.use(express.json());
@@ -60,6 +69,7 @@ app.post('/api/addorganization', (req, res) => {
       res.status(200).json({ message: 'Registered Successfully' });
     }
   );
+  logFile.write(`Query: INSERT INTO Organization - Time: ${new Date().toISOString()}\n`);
 
 });
 app.get('/api/organizations',(req,res)=>{
@@ -67,6 +77,10 @@ app.get('/api/organizations',(req,res)=>{
   pool.query(`select name,address,phone_number,email,image from Organization where id=? `,[id],(err,results)=>{
     if(err){
       console.error(err)
+      res.json({
+        status:400,
+        error:'Id is required'
+      })
     }else{
       res.json({
         status:200,
@@ -74,6 +88,8 @@ app.get('/api/organizations',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: SELECT * from Organization - Time: ${new Date().toISOString()}\n`);
+
 })
 app.put('/api/updateOrganization', (req, res) => {
   const data = req.body;
@@ -97,6 +113,7 @@ app.put('/api/updateOrganization', (req, res) => {
       res.status(200).json({ message: 'Updated Successfully' });
     }
   );
+  logFile.write(`Query: update Organization - Time: ${new Date().toISOString()}\n`);
 
 });
 
@@ -112,6 +129,8 @@ app.delete('/api/deleteOrganization',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: update Organization set isdeleted=1 - Time: ${new Date().toISOString()}\n`);
+
 })
 
 
@@ -159,26 +178,12 @@ app.get('/api/Organization', (req, res) => {
         }
       });
     }
+    logFile.write(`Query: SELECT id,name,address,phone_number as PhoneNumber,email,image FROM Organization - Time: ${new Date().toISOString()}\n`);
+
   });
+
 });
 
-app.get('/api/getbyIdOrganization/:id', (req, res) => {
-  const data = req.params.id;
-  const sqlQuery = 'SELECT id, name, Address, Phone_number as PhoneNumber, email, image FROM Organization WHERE id = ?';
-
-  pool.query(sqlQuery, [data], (err, results) => {
-    if (err) {
-      res.status(500).json({
-        error: err
-      });
-    } else {
-      res.json({
-        status: 200,
-        data: results
-      });
-    }
-  });
-});
 
 app.post('/api/addAbout', (req, res) => {
   const data = req.body;
@@ -195,6 +200,8 @@ app.post('/api/addAbout', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+  logFile.write(`Query: insert into About (id,title,description,OrgId,IsDeleted)  - Time: ${new Date().toISOString()}\n`);
+
 });
 
 app.put('/api/updateAbout',(req,res)=>{
@@ -209,6 +216,8 @@ app.put('/api/updateAbout',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: update About set title=?, description=? where id=?  - Time: ${new Date().toISOString()}\n`);
+
 })
 
 app.delete('/api/deleteAbout',(req,res)=>{
@@ -223,6 +232,8 @@ app.delete('/api/deleteAbout',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: update About set IsDeleted=1 where id=?  - Time: ${new Date().toISOString()}\n`);
+
 })
 
 
@@ -230,7 +241,7 @@ app.delete('/api/deleteAbout',(req,res)=>{
 app.get('/api/GetAbout', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
-  const OrgId = req.body.id;
+  const OrgId = req.query.id;
 
   const offset = (currentPage - 1) * pageSize;
 
@@ -271,6 +282,8 @@ app.get('/api/GetAbout', (req, res) => {
           });
       }
   });
+  logFile.write(`Query: SELECT id, title, description, OrgId as OrganizationId FROM About WHERE IsDeleted = 0  - Time: ${new Date().toISOString()}\n`);
+
 });
 
 
@@ -290,6 +303,8 @@ app.post('/api/addContact', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+  logFile.write(`Query: insert into Contact (id,name,email,message,OrgId,IsDeleted)   - Time: ${new Date().toISOString()}\n`);
+
 })
 
 
@@ -336,6 +351,8 @@ app.get('/api/getContact', (req, res) => {
       });
     }
   })
+  logFile.write(`Query: SELECT id,name,email,message,OrgId as OrganizationId FROM Contact where IsDeleted=0    - Time: ${new Date().toISOString()}\n`);
+
 });
 
 app.post('/api/login', (req, res) => {
@@ -375,6 +392,8 @@ return res.status(200).json({
 
      
   });
+  logFile.write(`Query: SELECT * FROM Users WHERE username = ?    - Time: ${new Date().toISOString()}\n`);
+
 });
 
 // Refresh token route
@@ -400,6 +419,8 @@ app.post('/api/token', (req, res) => {
           accessToken
       });
   });
+  logFile.write(`Token   - Time: ${new Date().toISOString()}\n`);
+
 });
 
 app.post('/api/logout', (req, res) => {
@@ -425,6 +446,7 @@ function authenticateToken(req, res, next) {
       req.user = user;
       next();
   });
+
 }
 
 
@@ -444,6 +466,8 @@ app.post('/api/addFounders', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+  logFile.write(`Query: insert into Founders (id,name,Designation,Image,OrgId,IsDeleted)    - Time: ${new Date().toISOString()}\n`);
+
 });
 
 app.put('/api/updateFounders',(req,res)=>{
@@ -459,6 +483,8 @@ app.put('/api/updateFounders',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: update Founders set name=?, Designation=? where id=?    - Time: ${new Date().toISOString()}\n`);
+
 })
 
 app.delete('/api/deleteFounders',(req,res)=>{
@@ -473,9 +499,12 @@ app.delete('/api/deleteFounders',(req,res)=>{
       })
     }
   })
+  logFile.write(`Query: update Founders set IsDeleted=1 where id=?    - Time: ${new Date().toISOString()}\n`);
+
 })
 
 app.get('/api/getFounders', (req, res) => {
+
   const currentPage = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 5;
   const OrgId = req.query.id; // Get OrgId from the query string
@@ -489,7 +518,7 @@ app.get('/api/getFounders', (req, res) => {
     return res.json({
       status: 400,
       error: 'OrgId is required',
-    });
+    })
   }
 
   // Correctly pass the OrgId to the countQuery
@@ -527,6 +556,9 @@ app.get('/api/getFounders', (req, res) => {
       });
     }
   });
+  logFile.write(`Query: SELECT id, name, Designation, Image, OrgId as OrganizationId FROM Founders WHERE IsDeleted = 0   - Time: ${new Date().toISOString()}\n`);
+
+
 });
 
 
@@ -573,6 +605,8 @@ app.get('/api/GetFounders',(req,res)=>{
       });
     }
   })
+  logFile.write(`Query: SELECT id,name,Designation,Image,OrgId as OrganizationId FROM Founders   - Time: ${new Date().toISOString()}\n`);
+
 })
 
 app.post('/api/addMission', (req, res) => {
@@ -591,6 +625,7 @@ app.post('/api/addMission', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+
 });
 
 app.put('/api/updateMission',(req,res)=>{
@@ -619,6 +654,7 @@ app.delete('/api/deleteMission',(req,res)=>{
       })
     }
   })
+
 })
 
 app.get('/api/getMission', (req, res) => {
@@ -664,6 +700,7 @@ app.get('/api/getMission', (req, res) => {
       });
     }
   })
+
 });
 
 app.post('/api/addMissionImages', (req, res) => {
@@ -682,6 +719,7 @@ app.post('/api/addMissionImages', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+
 });
 
 app.get('/api/getMissionImages', (req, res) => {
@@ -727,6 +765,7 @@ app.get('/api/getMissionImages', (req, res) => {
       });
     }
   })
+
 });
 app.delete('/api/deleteMissionImage',(req,res)=>{
   const data = req.body.id;
@@ -758,6 +797,7 @@ app.post('/api/addProject', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+
 });
 
 app.put('/api/updateProject',(req,res)=>{
@@ -773,6 +813,7 @@ app.put('/api/updateProject',(req,res)=>{
         })
       }
     })
+  
 });
 
 app.delete('/api/deleteProject',(req,res)=>{
@@ -787,6 +828,7 @@ app.delete('/api/deleteProject',(req,res)=>{
       })
     }
   })
+
 })
 
 app.get('/api/getProjects', (req, res) => {
@@ -832,6 +874,7 @@ app.get('/api/getProjects', (req, res) => {
       });
     }
   })
+
 });
 app.post('/api/addSocialEvents', (req, res) => {
   const data = req.body;
@@ -862,6 +905,7 @@ app.delete('/api/deleteSocialEvents',(req,res)=>{
       })
     }
   })
+
 })
 
 app.get('/api/getSocialEvents', (req, res) => {
@@ -907,6 +951,7 @@ app.get('/api/getSocialEvents', (req, res) => {
       });
     }
   })
+
 });
 app.post('/api/addUsers', (req, res) => {
   const data = req.body;
@@ -923,6 +968,7 @@ app.post('/api/addUsers', (req, res) => {
     console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
   })
+
 });
 
 app.put('/api/updateusers',(req,res)=>{
@@ -937,6 +983,7 @@ app.put('/api/updateusers',(req,res)=>{
       })
     }
   })
+
 });
 
 app.delete('/api/deleteUsers',(req,res)=>{
@@ -951,6 +998,7 @@ app.delete('/api/deleteUsers',(req,res)=>{
       })
     }
   })
+
 })
 app.get('/api/getUsers', (req, res) => {
   const currentPage = parseInt(req.query.page) || 1;
@@ -995,6 +1043,7 @@ app.get('/api/getUsers', (req, res) => {
       });
     }
   })
+
 });
 
 app.post('/api/Addadminusers',(req,res)=>{
@@ -1012,6 +1061,7 @@ app.post('/api/Addadminusers',(req,res)=>{
         })
       }
     })
+  
 });
 
 app.get('/api/getAdminUsers',(req,res)=>{
@@ -1057,6 +1107,7 @@ app.get('/api/getAdminUsers',(req,res)=>{
       });
     }
   })
+
 });
 
 app.post('/api/addRoutes',(req,res)=>{
@@ -1073,6 +1124,7 @@ app.post('/api/addRoutes',(req,res)=>{
       })
     }
   })
+
 });
 
 app.get('/api/GetRoutes',(req,res)=>{
@@ -1086,6 +1138,7 @@ app.get('/api/GetRoutes',(req,res)=>{
       })
     }
   })
+
   });
 
 app.delete('/api/deleteRoute',(req,res)=>{
