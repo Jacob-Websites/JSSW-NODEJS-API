@@ -1128,9 +1128,13 @@ app.post('/api/addRoutes',(req,res)=>{
 });
 
 app.get('/api/GetRoutes',(req,res)=>{
-  pool.query(`SELECT id,name,link,OrganizationId	,Component,displayOrder FROM Routes where IsDeleted=0`,(err,results)=>{
+  const id=req.query.id
+  pool.query(`SELECT id,name,link,OrganizationId	,Component,displayOrder FROM Routes where IsDeleted=0 AND OrganizationId=?`,[id],(err,results)=>{
     if(err){
-      console.error(err)
+      res.json({
+        status:400,
+        error:'Org Id Is Required '
+      })
     }else{
       res.json({
         status:200,
@@ -1154,6 +1158,38 @@ app.delete('/api/deleteRoute',(req,res)=>{
     }
   });
 
+});
+
+app.post('/api/addSites',(req,res)=>{
+  const data=req.body;
+  pool.query(`insert into sites (id,name,link,Orgid,IsDeleted) values (uuid(),?,?,?,0)`,[data.name,data.link,data.orgId],(err,results)=>{
+    if(err){
+      console.log(err)
+      res.status(500).json({
+        message:err
+      })
+    }else{
+      res.status(200).json({
+        data:"Sites added Successfully"
+      })
+    }
+  })
+})
+
+app.get('/api/getSites',(req,res)=>{
+  pool.query(`select id,name,link,OrgId as OrganizationId from sites where IsDeleted=0`,(err,results)=>{
+    if(err){
+      res.json({
+        status:500,
+        error:err
+      })
+    }else{
+      res.json({
+        status:200,
+        data:results
+      })
+    }
+  })
 })
 
 
