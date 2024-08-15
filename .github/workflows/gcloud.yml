@@ -1,14 +1,13 @@
-name: Deploy to Google Cloud App Engine
+name: Deploy Node.js API to Google Cloud App Engine
 
 on:
   push:
     branches:
-      - main 
-      - gcloud
+      - main  # Deploy on pushes to the main branch
 
 jobs:
   deploy:
-    name: Deploy to Google Cloud
+    name: Deploy to Google Cloud App Engine
     runs-on: ubuntu-latest
 
     steps:
@@ -18,13 +17,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: '20'  # Use the version you need
 
       - name: Install dependencies
         run: npm install
-
-      - name: Build the project
-        run: npm run build
 
       - name: Install Google Cloud SDK
         run: |
@@ -35,11 +31,12 @@ jobs:
       - name: Authenticate with Google Cloud
         run: gcloud auth activate-service-account --key-file="${{ secrets.GCP_SA_KEY }}"
 
+      - name: Set Google Cloud Project
+        run: gcloud config set project YOUR_PROJECT_ID
+
       - name: Deploy to App Engine
         run: |
-          gcloud config set project YOUR_PROJECT_ID
           gcloud app deploy --quiet
 
       - name: Clean up
-        run: |
-          gcloud auth revoke
+        run: gcloud auth revoke
