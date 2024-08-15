@@ -1,14 +1,15 @@
-name: Deploy to Google Cloud
+name: Deploy to Google Cloud App Engine
 
 on:
   push:
     branches:
-      - main 
-      - gcloud
+      - main  # Deploy on pushes to the main branch
 
 jobs:
   deploy:
+    name: Deploy to Google Cloud
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -16,23 +17,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.16.0'  # Specify your Node.js version
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Set up Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: 'latest'
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: dyanamicwebsites  # Replace with your Google Cloud project ID
+      - name: Build the project
+        run: npm run build
 
-      - name: Set active account
-        run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+      - name: Install Google Cloud SDK
+        run: |
+          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-sdk
 
-      - name: Set project
-        run: gcloud config set project dyanamicwebsites  # Replace with your Google Cloud project ID
+      - name: Authenticate with Google Cloud
+        run: gcloud auth activate-service-account --key-file="${{ secrets.GCP_SA_KEY }}"
 
-      - name: Deploy to Google App Engine
-        run: gcloud app deploy --quiet
+      - name: Deploy to App Engine
+        run: |
+          gcloud config set project YOUR_PROJECT_ID
+          gcloud app deploy --quiet
+
+      - name: Clean up
+        run: |
+          gcloud auth revoke
