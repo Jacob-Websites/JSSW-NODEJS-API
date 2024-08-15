@@ -20,13 +20,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-
       - name: Google Cloud CLI Setup
         uses: google-github-actions/setup-gcloud@v2
         with:
           version: 'latest'
           service_key: ${{ secrets.GCP_SA_KEY }}
           project_id: dyanamicwebsites  # Replace with your Google Cloud project ID
+
+      - name: Authenticate with Google Cloud
+        run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
 
       - name: Deploy to Google App Engine
         run: gcloud app deploy --quiet
