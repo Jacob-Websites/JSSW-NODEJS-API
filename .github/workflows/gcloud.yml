@@ -3,8 +3,8 @@ name: Deploy to Google Cloud
 on:
   push:
     branches:
-      - main  # Set this to your deployment branch
-
+      - main 
+      - gcloud
 jobs:
   deploy:
     runs-on: ubuntu-latest
