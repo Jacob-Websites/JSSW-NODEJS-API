@@ -3,7 +3,8 @@ name: Deploy to Google Cloud App Engine
 on:
   push:
     branches:
-      - main  # Deploy on pushes to the main branch
+      - main 
+      - gcloud
 
 jobs:
   deploy:
