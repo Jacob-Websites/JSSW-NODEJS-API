@@ -3,7 +3,8 @@ name: Deploy to Google Cloud
 on:
   push:
     branches:
-      - main  # Set this to your deployment branch
+      - main 
+      - gcloud
 
 jobs:
   deploy:
@@ -15,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Specify your Node.js version
+          node-version: '20.16.0'  # Specify your Node.js version
 
       - name: Install dependencies
         run: npm install
@@ -24,8 +25,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
         with:
           version: 'latest'
-          service_key: ${{ secrets.GCP_SA_KEY }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: dyanamicwebsites  # Replace with your Google Cloud project ID
+
+      - name: Set project
+        run: gcloud config set project dyanamicwebsites  # Replace with your Google Cloud project ID
 
       - name: Deploy to Google App Engine
         run: gcloud app deploy --quiet
