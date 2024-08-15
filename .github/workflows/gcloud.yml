@@ -28,7 +28,7 @@ jobs:
           project_id: dyanamicwebsites  # Replace with your Google Cloud project ID
 
       - name: Authenticate with Google Cloud
-        run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY }}
+        run: gcloud auth activate-service-account --key-file=${{ secrets.GCP_SA_KEY.key }}
 
       - name: Set project
         run: gcloud config set project dyanamicwebsites  # Replace with your Google Cloud project ID
