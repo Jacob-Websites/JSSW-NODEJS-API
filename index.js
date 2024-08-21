@@ -11,7 +11,6 @@ const path = require('path');
 const logFile = fs.createWriteStream('db.log', { flags: 'a' });
 const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: logStream }));
-
 // Your routes and other middleware
 app.use(bodyParser.urlencoded({ extended: true, limit: '800mb' }));
 const cors = require('cors');
