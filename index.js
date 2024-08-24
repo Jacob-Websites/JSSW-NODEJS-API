@@ -910,31 +910,46 @@ app.delete('/api/deleteSocialEvents',(req,res)=>{
 })
 
 app.get('/api/getSocialEvents', (req, res) => {
-  const currentPage = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 5;
+  const currentPage = parseInt(req.query.page, 10) || 1;
+  const pageSize = parseInt(req.query.pageSize, 10) || 5;
+  const organizationId = req.query.id;
 
   const offset = (currentPage - 1) * pageSize;
 
-  const query = `SELECT id,name,description,image,OrgId as OrganizationId FROM SocialEvents where IsDeleted=0 LIMIT ? OFFSET ?`;
+  // Ensure organizationId is provided
+  if (!organizationId) {
+    return res.status(400).json({
+      status: 400,
+      error: 'Organization ID is required'
+    });
+  }
 
-  const countQuery = `SELECT COUNT(*) AS total FROM SocialEvents where IsDeleted=0`;
+  const query = `SELECT id, name, description, image, OrgId as OrganizationId 
+                 FROM SocialEvents 
+                 WHERE IsDeleted = 0 AND OrgId = ? 
+                 LIMIT ? OFFSET ?`;
 
-  pool.query(countQuery, (err, countResult) => {
+  const countQuery = `SELECT COUNT(*) AS total 
+                      FROM SocialEvents 
+                      WHERE IsDeleted = 0 AND OrgId = ?`;
+
+  pool.query(countQuery, [organizationId], (err, countResult) => {
     if (err) {
-      console.error("Error Fetching SocialEvents Count");
-      return res.json({
-        status: 403,
-        error: err
+      console.error("Error Fetching SocialEvents Count", err);
+      return res.status(500).json({
+        status: 500,
+        error: 'Error Fetching SocialEvents Count'
       });
     } else {
       const totalRecords = countResult[0].total;
       const totalPages = Math.ceil(totalRecords / pageSize);
 
-      pool.query(query, [pageSize, offset], (err, result) => {
+      pool.query(query, [organizationId, pageSize, offset], (err, result) => {
         if (err) {
-          return res.json({
-            status: 403,
-            error: err
+          console.error("Error Fetching SocialEvents", err);
+          return res.status(500).json({
+            status: 500,
+            error: 'Error Fetching SocialEvents'
           });
         } else {
           res.json({
@@ -943,17 +958,16 @@ app.get('/api/getSocialEvents', (req, res) => {
               result,
               totalRecords,
               totalPages,
-              currentPage: currentPage,
+              currentPage,
               pageSize
-            },
-
+            }
           });
         }
       });
     }
-  })
-
+  });
 });
+
 app.post('/api/addUsers', (req, res) => {
   const data = req.body;
   pool.query(`insert into Users (id,username,password,OrgId,IsDeleted) values (uuid(), ?,?, ?,0)`, [
