@@ -489,13 +489,14 @@ app.put('/api/updateFounders',(req,res)=>{
 app.delete('/api/deleteFounders/:id',(req,res)=>{
   const data = req.params.id;
   console.log(data)
-  pool.query(`update Founders set IsDeleted=1 where id=?`,[data],(err,res)=>{
+  pool.query(`update Founders set IsDeleted=1 where id=?`,[data],(err,response)=>{
     if(err){
       console.error(err)
     }else{
       res.json({
         status:200,
-        message:'Deleted SuccessFully'
+        message:'Deleted SuccessFully',
+        data:response
       })
     }
   })
