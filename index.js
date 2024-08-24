@@ -486,8 +486,8 @@ app.put('/api/updateFounders',(req,res)=>{
 
 })
 
-app.delete('/api/deleteFounders',(req,res)=>{
-  const data = req.body.id;
+app.delete('/api/deleteFounders/:id',(req,res)=>{
+  const data = req.params.id;
   pool.query(`update Founders set IsDeleted=1 where id=${data}`,(err,res)=>{
     if(err){
       console.error(err)
