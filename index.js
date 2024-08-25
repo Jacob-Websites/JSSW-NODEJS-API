@@ -89,6 +89,22 @@ app.get('/api/organizations',(req,res)=>{
   })
   logFile.write(`Query: SELECT * from Organization - Time: ${new Date().toISOString()}\n`);
 
+});
+
+app.get('/api/getallOrganization',(req,res)=>{
+  pool.query(`select id,name,address,phone_number,email,image from Organization`,(err,results)=>{
+    if(err){
+      res.json({
+        status:500,
+        error:err
+      })
+    }else{
+      res.json({
+        status:200,
+        data:results
+      })
+    }
+  })
 })
 app.put('/api/updateOrganization', (req, res) => {
   const data = req.body;
@@ -364,33 +380,62 @@ app.post('/api/login', (req, res) => {
       })
   }
 
-  pool.query('SELECT * FROM Users WHERE username = ?', [username], (error, results) => {
-      if (error) {
-          return res.status(500).json({ message: 'Server error' });
-      }
+  pool.query(`
+    SELECT 
+        Users.username, 
+        Users.password, 
+        Users.Orgid, 
+        Users.role,
+        Users.Id AS userId,  -- Aliasing the user Id
+        Organization.Id AS orgId,  -- Aliasing the organization Id
+        Organization.name AS orgName, 
+        Organization.email 
+    FROM Users 
+    INNER JOIN Organization ON Users.Orgid = Organization.Id 
+    WHERE Users.username = ?`, 
+    [username], 
+    (error, results) => {
+        if (error) {
 
-      if (results.length === 0) {
-          return res.status(401).json({ message: 'Invalid username or password' });
-      }
+            return res.status(500).json({ message: error });
+        }
 
-      const user = results[0];
-      if(password === user.password){
- const accessToken = jwt.sign({ username: user.username, id: user.id }, accessTokenSecret, { expiresIn: '20m' });
- const refreshToken = jwt.sign({ username: user.username, id: user.id }, refreshTokenSecret);
-refreshTokens.push(refreshToken);
-return res.status(200).json({
-    message: 'Login successful',
-    accessToken,
-    refreshToken,
-    organizationId:results[0].Orgid
-});
-      }else{
-        return res.status(401).json({ message: 'Invalid username or password' });
+        if (results.length === 0) {
+            return res.status(401).json({ message: 'Invalid username or password' });
+        }
 
-      }
+        const user = results[0];
 
-     
-  });
+        if (password === user.password) {
+            const accessToken = jwt.sign({ 
+                username: user.username, 
+                id: user.userId,  // Using the alias for user Id
+                orgId: user.orgId,  // Using the alias for organization Id
+                orgName: user.orgName ,
+                role:user.role
+            }, accessTokenSecret, { expiresIn: '20m' });
+
+            const refreshToken = jwt.sign({ 
+                username: user.username, 
+                id: user.userId,  // Using the alias for user Id
+                orgId: user.orgId  // Using the alias for organization Id
+            }, refreshTokenSecret);
+
+            refreshTokens.push(refreshToken);
+            console.log(user)
+            return res.status(200).json({
+                message: 'Login successful',
+                accessToken,
+                refreshToken,
+                organizationId: user.orgId,
+                role:user.role
+            });
+        } else {
+            return res.status(401).json({ message: 'Invalid username or password' });
+        }
+    }
+);
+
   logFile.write(`Query: SELECT * FROM Users WHERE username = ?    - Time: ${new Date().toISOString()}\n`);
 
 });
@@ -879,13 +924,15 @@ app.get('/api/getProjects', (req, res) => {
 });
 app.post('/api/addSocialEvents', (req, res) => {
   const data = req.body;
-  pool.query(`insert into SocialEvents (id,name,description,image,OrgId,IsDeleted) values (uuid(), ?, ?,?, ?,0)`, [
+console.log(data)
+  pool.query(`insert into SocialEvents (id,name,description,image,Orgid,IsDeleted) values (uuid(), ?, ?,?, ?,0)`, [
     data.name,
     data.description,
     data.image,
     data.orgId
   ], (err, results, fields) => {
     if (err) {
+      console.log(err)
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
       return;
@@ -894,8 +941,8 @@ app.post('/api/addSocialEvents', (req, res) => {
     res.status(200).json({ message: 'Registered Successfully' });
   })
 });
-app.delete('/api/deleteSocialEvents',(req,res)=>{
-  const data = req.body.id
+app.delete('/api/deleteSocialEvents/:id',(req,res)=>{
+  const data = req.params.id
   pool.query(`update SocialEvents set IsDeleted=1 where id=?`,[data],(err,res)=>{
     if(err){
       console.error(err)
@@ -910,13 +957,12 @@ app.delete('/api/deleteSocialEvents',(req,res)=>{
 })
 
 app.get('/api/getSocialEvents', (req, res) => {
-  const currentPage = parseInt(req.query.page, 10) || 1;
+  const currentPage = parseInt(req.query.pageNumber, 10) || 1;
   const pageSize = parseInt(req.query.pageSize, 10) || 5;
   const organizationId = req.query.id;
 
   const offset = (currentPage - 1) * pageSize;
 
-  // Ensure organizationId is provided
   if (!organizationId) {
     return res.status(400).json({
       status: 400,
@@ -979,9 +1025,11 @@ app.post('/api/addUsers', (req, res) => {
       console.error('Error inserting new record: ' + err.stack);
       res.status(500).json({ message: 'Error inserting new record' });
       return;
-    }
-    console.log('New record inserted with ID:', results.insertId);
+    }else{
+      console.log('New record inserted with ID:', results.insertId);
     res.status(200).json({ message: 'Registered Successfully' });
+    }
+    
   })
 
 });
