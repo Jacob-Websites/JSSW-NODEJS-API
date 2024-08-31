@@ -23,7 +23,8 @@ jobs:
       with:
         version: 'latest'
         service_account_key: ${{ secrets.GCLOUD_SERVICE_KEY }}
-        project_id: dyanamicwebsites
+        project_id: dynamicwebsites
+        export_default_credentials: true
 
     - name: Log in to Google Cloud
       run: gcloud auth configure-docker
@@ -37,7 +38,7 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: gcr.io/dyanamicwebsites/test:latest
+        tags: gcr.io/dynamicwebsites/test:latest
 
   trigger-deploy:
     runs-on: ubuntu-latest
