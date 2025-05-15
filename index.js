@@ -2,7 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const app = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.json({ limit: '800mb' })); // Adjust the limit as needed
+app.use(bodyParser.json({ limit: '800mb' })); 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const morgan = require('morgan');
@@ -11,31 +11,48 @@ const path = require('path');
 const logFile = fs.createWriteStream('db.log', { flags: 'a' });
 const logStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' });
 app.use(morgan('combined', { stream: logStream }));
-// Your routes and other middleware
 app.use(bodyParser.urlencoded({ extended: true, limit: '800mb' }));
 const cors = require('cors');
 app.use(cors());
 const accessTokenSecret = 'youraccesstokensecret';
 const refreshTokenSecret = 'yourrefreshtokensecret';
+const sql = require('mssql');
+ 
 let refreshTokens = [];
-const pool = mysql.createPool({
-  connectionLimit: 10,
-  host: 'btzothksikyd0tv6zljh-mysql.services.clever-cloud.com',
-  user: 'ub4bzrramjnmzuys',
-  password: 'jRKyeDjwQ7E5WNNLWpwU',
-  database: 'btzothksikyd0tv6zljh',
-  connectTimeout: 10000,
-  acquireTimeout: 10000,
-});
-pool.getConnection((err, connection) => {
-  if (err) {
-    console.log('Error getting database connection: ', err);
-
-  } else {
-    console.log("DB Connected")
-
-  }
-})
+// const pool = mysql.createPool({
+//   connectionLimit: 10,
+//   host: 'btzothksikyd0tv6zljh-mysql.services.clever-cloud.com',
+//   user: 'ub4bzrramjnmzuys',
+//   password: 'jRKyeDjwQ7E5WNNLWpwU',
+//   database: 'btzothksikyd0tv6zljh',
+//   connectTimeout: 10000,
+//   acquireTimeout: 10000,
+// });
+const config = {
+  user: 'SA',
+  password: 'Prabhu@985',
+  server: '34.73.28.147', // or your IP
+  database: 'jssw',
+  options: {
+    encrypt: true, // for Azure SQL
+    trustServerCertificate: true // for local dev
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    idleTimeoutMillis: 30000
+  },
+  connectionTimeout: 15000,
+  requestTimeout: 15000
+};
+sql.connect(config)
+  .then(pool => {
+    console.log('SQL Server Connected');
+    return pool;
+  })
+  .catch(err => {
+    console.error('Database connection failed: ', err);
+  })
 app.get('/', (req, res) => {
   res.json({
     status: 200,
@@ -1258,7 +1275,7 @@ app.get('/api/getSites',(req,res)=>{
 
 
 
-const port = 8080;
+const port = 9000;
 app.listen(port, () => {
   console.log(`Server started on port ${port}.`);
 });
